@@ -1,0 +1,202 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Twitch</title>
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.2.2/dist/css/bootstrap.min.css" 
+    rel="stylesheet" integrity="sha384-Zenh87qX5JnK2Jl0vWa8Ck2rdkQ2Bzep5IDxbcnCeuOxjzrPF/et3URy9Bv1WTRi" 
+    crossorigin="anonymous">
+  <script src="https://code.jquery.com/jquery-3.6.1.js">
+  </script>
+  <style>
+    .wapper{
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+    .navbar{
+      font-size: 30px;
+      padding: 10px;
+    }
+    .navbar-nav{
+      display: inline-block;
+      cursor: pointer;
+    }
+    .navbar-nav li{
+      display: inline-block;
+      font-size: 16px;
+      margin-right: 12px;
+      padding: 12px 24px;
+    }
+    .navbar-nav li:hover{
+      background: rgb(122, 122, 122);
+    }
+    .title{
+      padding: 36px;
+    }
+    .title div{
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      color: white;
+      font-size: 30px;
+    }
+    .titleName{
+      text-overflow: ellipsis;
+      white-space: nowrap;
+      overflow:hidden;
+      width: 300px;
+    }
+    main{
+      background: gray;
+    }
+    .league{
+      font-size: 20px;
+    }
+    .TopGames{
+      font-size: 18px;
+    }
+    .gamecarts{
+      display: inline-flex;
+      flex-wrap: wrap;
+      justify-content: center;
+      cursor: pointer;
+    }
+    .gamecart{
+      width:360px;
+      margin-left: 20px;
+      margin-top: 20px;
+      text-align: left;
+      opacity: 0.9;
+    }
+    .pic img{
+      height:250px;
+      width:360px;
+    }
+    .gamecart:hover{
+      transform: scale(1.1);
+      transition: all 0.2s;
+    }
+    .block{
+      background: #333;
+      display: flex;
+    }
+    .block img{
+      height: 40px;
+      margin-left: 10px;
+      border-radius: 100%;
+      margin-top:3px;
+    }
+    .content{
+      color: white;
+      margin-left: 10px;
+    }
+    .gamecart-empty{
+      width:360px;
+      margin-left: 16px;
+    }
+
+  </style>
+</head>
+<body>
+  <nav>
+    <div class="wapper">
+      <div class="navbar">Twitch Top Games</div>
+      <ul class="navbar-nav">
+      </ul>
+    </div>
+  </nav>
+  <main>
+    <section class="title">
+      <div class="league">League of Legends</div>
+      <div class="TopGames">Top 20 popular live streams sorted by current viewres</div>
+    </section>
+    <div class="gamecarts">
+    </div>
+  </main>
+
+  <script>
+    const API_URL = 'https://api.twitch.tv/helix'
+    const CLIENT_ID = process.CLIENT_ID
+    const AUTHORIZATION = process.AUTHORIZATION
+    const STREAM_TEMPLATE = `
+              <div class="gamecart">
+                <div class="pic">
+                  <img src="$url">
+                </div>
+                <div class="block">
+                  <div class="content">
+                    <div class="titleName">$title</div>
+                    <div class="contentName">$user_name</div>
+                  </div>
+                </div>
+              </div>
+            `
+
+    getGames(function(games){
+      for(let game of games){
+        let element = document.createElement('li')
+        $('.navbar-nav').append(`
+          <li class='${game.id}'>${game.name}</li>
+        `)
+      }
+      getStream(games[0].id)
+
+    });
+
+    $(".navbar-nav").click( e=> {
+      if(e.target.tagName.toLowerCase() === 'li'){
+        const gameName = e.target.innerText;
+        const gameId = e.target.className
+        $('.league').text(gameName);
+        $('.gamecarts').html('')
+        getStream(gameId)
+      }
+    })
+
+
+    function getGames(callback){
+      var request = new XMLHttpRequest();
+      request.open("GET", API_URL + "/games/top?first=5", true)
+      request.setRequestHeader('CLIENT-ID',CLIENT_ID)
+      request.setRequestHeader('AUTHORIZATION',AUTHORIZATION)
+      request.onload = function(){
+        if(request.status >= 200 && request.status < 400){
+          const games = JSON.parse(request.response).data
+          callback(games);
+        }
+      }
+      request.send();
+    }
+
+    function getStream(getgame){
+      var request2 = new XMLHttpRequest();
+      request2.open("GET", API_URL +"/streams?game_id=" + 
+        getgame , true)
+      request2.setRequestHeader('CLIENT-ID',CLIENT_ID)
+      request2.setRequestHeader('AUTHORIZATION',AUTHORIZATION)
+      request2.onload = function(){
+        if(request2.status >= 200 && request2.status < 400){
+          const data = JSON.parse(request2.response).data
+          for(let streams of data){
+            var str = streams.thumbnail_url.split('{')
+            var url = str[0]+'360x250.jpg'
+            let gamecart = document.createElement('div')
+            $('.gamecarts').append(STREAM_TEMPLATE
+            .replace('$url', url)
+            .replace('$title', streams.title)
+            .replace('$user_name', streams.user_name))
+          }
+        let gamecartempty = document.createElement('div')
+        $('.gamecarts').append(`
+          <div class="gamecart-empty"></div>
+          <div class="gamecart-empty"></div>
+        `)
+        }
+      }
+      request2.send();
+    }
+  </script>
+</body>
+</html>
