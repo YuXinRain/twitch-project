@@ -118,8 +118,8 @@
 
   <script>
     const API_URL = 'https://api.twitch.tv/helix'
-    const CLIENT_ID = process.CLIENT_ID
-    const AUTHORIZATION = process.AUTHORIZATION
+    const CLIENT_ID = process.env.CLIENT_ID
+    const AUTHORIZATION = process.env.AUTHORIZATION
     const STREAM_TEMPLATE = `
               <div class="gamecart">
                 <div class="pic">
